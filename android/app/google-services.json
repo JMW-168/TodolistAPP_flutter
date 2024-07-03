@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "365234965464",
+    "project_id": "todo-list-zt7jre",
+    "storage_bucket": "todo-list-zt7jre.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:365234965464:android:280367cdedc988042640ad",
+        "android_client_info": {
+          "package_name": "com.mycompany.todolist"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAsFM7M6GQMxYSZjtY_HhPRuE-Uz_H-Uhw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
