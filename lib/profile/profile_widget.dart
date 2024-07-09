@@ -1,9 +1,12 @@
 import '/auth/firebase_auth/auth_util.dart';
+import '/backend/backend.dart';
+import '/backend/firebase_storage/storage.dart';
 import '/flutter_flow/flutter_flow_animations.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
+import '/flutter_flow/upload_data.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'profile_model.dart';
@@ -253,26 +256,89 @@ class _ProfileWidgetState extends State<ProfileWidget>
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(2.0),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(60.0),
-                    child: Image.network(
-                      '',
-                      width: 100.0,
-                      height: 100.0,
-                      fit: BoxFit.cover,
+                  child: InkWell(
+                    splashColor: Colors.transparent,
+                    focusColor: Colors.transparent,
+                    hoverColor: Colors.transparent,
+                    highlightColor: Colors.transparent,
+                    onTap: () async {
+                      final selectedMedia =
+                          await selectMediaWithSourceBottomSheet(
+                        context: context,
+                        allowPhoto: true,
+                      );
+                      if (selectedMedia != null &&
+                          selectedMedia.every((m) =>
+                              validateFileFormat(m.storagePath, context))) {
+                        setState(() => _model.isDataUploading = true);
+                        var selectedUploadedFiles = <FFUploadedFile>[];
+
+                        var downloadUrls = <String>[];
+                        try {
+                          selectedUploadedFiles = selectedMedia
+                              .map((m) => FFUploadedFile(
+                                    name: m.storagePath.split('/').last,
+                                    bytes: m.bytes,
+                                    height: m.dimensions?.height,
+                                    width: m.dimensions?.width,
+                                    blurHash: m.blurHash,
+                                  ))
+                              .toList();
+
+                          downloadUrls = (await Future.wait(
+                            selectedMedia.map(
+                              (m) async =>
+                                  await uploadData(m.storagePath, m.bytes),
+                            ),
+                          ))
+                              .where((u) => u != null)
+                              .map((u) => u!)
+                              .toList();
+                        } finally {
+                          _model.isDataUploading = false;
+                        }
+                        if (selectedUploadedFiles.length ==
+                                selectedMedia.length &&
+                            downloadUrls.length == selectedMedia.length) {
+                          setState(() {
+                            _model.uploadedLocalFile =
+                                selectedUploadedFiles.first;
+                            _model.uploadedFileUrl = downloadUrls.first;
+                          });
+                        } else {
+                          setState(() {});
+                          return;
+                        }
+                      }
+
+                      await currentUserReference!.update(createUsersRecordData(
+                        photoUrl: _model.uploadedFileUrl,
+                      ));
+                    },
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(60.0),
+                      child: Image.network(
+                        _model.uploadedFileUrl,
+                        width: 100.0,
+                        height: 100.0,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
                 ),
               ).animateOnPageLoad(animationsMap['cardOnPageLoadAnimation']!),
               Padding(
                 padding: const EdgeInsetsDirectional.fromSTEB(0.0, 12.0, 0.0, 0.0),
-                child: Text(
-                  'Andrea Davis',
-                  style: FlutterFlowTheme.of(context).headlineSmall.override(
-                        fontFamily: 'Outfit',
-                        letterSpacing: 0.0,
-                      ),
-                ).animateOnPageLoad(animationsMap['textOnPageLoadAnimation1']!),
+                child: AuthUserStreamWidget(
+                  builder: (context) => Text(
+                    valueOrDefault(currentUserDocument?.userName, ''),
+                    style: FlutterFlowTheme.of(context).headlineSmall.override(
+                          fontFamily: 'Outfit',
+                          letterSpacing: 0.0,
+                        ),
+                  ).animateOnPageLoad(
+                      animationsMap['textOnPageLoadAnimation1']!),
+                ),
               ),
               Padding(
                 padding: const EdgeInsetsDirectional.fromSTEB(0.0, 4.0, 0.0, 0.0),
@@ -324,6 +390,10 @@ class _ProfileWidgetState extends State<ProfileWidget>
                             onChanged: (newValue) async {
                               setState(
                                   () => _model.switchListTileValue = newValue);
+                              if (newValue) {
+                                setDarkModeSetting(context, ThemeMode.dark);
+                                setDarkModeSetting(context, ThemeMode.light);
+                              }
                             },
                             title: Text(
                               'Dark Mode/Light Mode',
@@ -450,7 +520,7 @@ class _ProfileWidgetState extends State<ProfileWidget>
                     await authManager.signOut();
                     GoRouter.of(context).clearRedirectLocation();
 
-                    context.goNamedAuth('WelcomePage', context.mounted);
+                    context.goNamedAuth('login', context.mounted);
                   },
                   text: 'Log Out',
                   options: FFButtonOptions(

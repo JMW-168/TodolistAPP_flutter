@@ -16,55 +16,67 @@ class TasksRecord extends FirestoreRecord {
     _initializeFields();
   }
 
-  // "owner" field.
-  DocumentReference? _owner;
-  DocumentReference? get owner => _owner;
-  bool hasOwner() => _owner != null;
-
   // "users_assigned" field.
   List<DocumentReference>? _usersAssigned;
   List<DocumentReference> get usersAssigned => _usersAssigned ?? const [];
   bool hasUsersAssigned() => _usersAssigned != null;
 
-  // "project_name" field.
-  String? _projectName;
-  String get projectName => _projectName ?? '';
-  bool hasProjectName() => _projectName != null;
+  // "Task_title" field.
+  String? _taskTitle;
+  String get taskTitle => _taskTitle ?? '';
+  bool hasTaskTitle() => _taskTitle != null;
 
-  // "description" field.
-  String? _description;
-  String get description => _description ?? '';
-  bool hasDescription() => _description != null;
+  // "Task_details" field.
+  String? _taskDetails;
+  String get taskDetails => _taskDetails ?? '';
+  bool hasTaskDetails() => _taskDetails != null;
 
-  // "number_tasks" field.
-  int? _numberTasks;
-  int get numberTasks => _numberTasks ?? 0;
-  bool hasNumberTasks() => _numberTasks != null;
+  // "Task_completed" field.
+  bool? _taskCompleted;
+  bool get taskCompleted => _taskCompleted ?? false;
+  bool hasTaskCompleted() => _taskCompleted != null;
 
-  // "completed_tasks" field.
-  int? _completedTasks;
-  int get completedTasks => _completedTasks ?? 0;
-  bool hasCompletedTasks() => _completedTasks != null;
+  // "Task_ID" field.
+  int? _taskID;
+  int get taskID => _taskID ?? 0;
+  bool hasTaskID() => _taskID != null;
 
-  // "last_edited" field.
-  DateTime? _lastEdited;
-  DateTime? get lastEdited => _lastEdited;
-  bool hasLastEdited() => _lastEdited != null;
+  // "Task_time_created" field.
+  DateTime? _taskTimeCreated;
+  DateTime? get taskTimeCreated => _taskTimeCreated;
+  bool hasTaskTimeCreated() => _taskTimeCreated != null;
 
-  // "time_created" field.
-  DateTime? _timeCreated;
-  DateTime? get timeCreated => _timeCreated;
-  bool hasTimeCreated() => _timeCreated != null;
+  // "Task_last_edited" field.
+  DateTime? _taskLastEdited;
+  DateTime? get taskLastEdited => _taskLastEdited;
+  bool hasTaskLastEdited() => _taskLastEdited != null;
+
+  // "Task_category" field.
+  String? _taskCategory;
+  String get taskCategory => _taskCategory ?? '';
+  bool hasTaskCategory() => _taskCategory != null;
+
+  // "Task_due_time" field.
+  DateTime? _taskDueTime;
+  DateTime? get taskDueTime => _taskDueTime;
+  bool hasTaskDueTime() => _taskDueTime != null;
+
+  // "Task_Priority" field.
+  String? _taskPriority;
+  String get taskPriority => _taskPriority ?? '';
+  bool hasTaskPriority() => _taskPriority != null;
 
   void _initializeFields() {
-    _owner = snapshotData['owner'] as DocumentReference?;
     _usersAssigned = getDataList(snapshotData['users_assigned']);
-    _projectName = snapshotData['project_name'] as String?;
-    _description = snapshotData['description'] as String?;
-    _numberTasks = castToType<int>(snapshotData['number_tasks']);
-    _completedTasks = castToType<int>(snapshotData['completed_tasks']);
-    _lastEdited = snapshotData['last_edited'] as DateTime?;
-    _timeCreated = snapshotData['time_created'] as DateTime?;
+    _taskTitle = snapshotData['Task_title'] as String?;
+    _taskDetails = snapshotData['Task_details'] as String?;
+    _taskCompleted = snapshotData['Task_completed'] as bool?;
+    _taskID = castToType<int>(snapshotData['Task_ID']);
+    _taskTimeCreated = snapshotData['Task_time_created'] as DateTime?;
+    _taskLastEdited = snapshotData['Task_last_edited'] as DateTime?;
+    _taskCategory = snapshotData['Task_category'] as String?;
+    _taskDueTime = snapshotData['Task_due_time'] as DateTime?;
+    _taskPriority = snapshotData['Task_Priority'] as String?;
   }
 
   static CollectionReference get collection =>
@@ -101,23 +113,27 @@ class TasksRecord extends FirestoreRecord {
 }
 
 Map<String, dynamic> createTasksRecordData({
-  DocumentReference? owner,
-  String? projectName,
-  String? description,
-  int? numberTasks,
-  int? completedTasks,
-  DateTime? lastEdited,
-  DateTime? timeCreated,
+  String? taskTitle,
+  String? taskDetails,
+  bool? taskCompleted,
+  int? taskID,
+  DateTime? taskTimeCreated,
+  DateTime? taskLastEdited,
+  String? taskCategory,
+  DateTime? taskDueTime,
+  String? taskPriority,
 }) {
   final firestoreData = mapToFirestore(
     <String, dynamic>{
-      'owner': owner,
-      'project_name': projectName,
-      'description': description,
-      'number_tasks': numberTasks,
-      'completed_tasks': completedTasks,
-      'last_edited': lastEdited,
-      'time_created': timeCreated,
+      'Task_title': taskTitle,
+      'Task_details': taskDetails,
+      'Task_completed': taskCompleted,
+      'Task_ID': taskID,
+      'Task_time_created': taskTimeCreated,
+      'Task_last_edited': taskLastEdited,
+      'Task_category': taskCategory,
+      'Task_due_time': taskDueTime,
+      'Task_Priority': taskPriority,
     }.withoutNulls,
   );
 
@@ -130,26 +146,30 @@ class TasksRecordDocumentEquality implements Equality<TasksRecord> {
   @override
   bool equals(TasksRecord? e1, TasksRecord? e2) {
     const listEquality = ListEquality();
-    return e1?.owner == e2?.owner &&
-        listEquality.equals(e1?.usersAssigned, e2?.usersAssigned) &&
-        e1?.projectName == e2?.projectName &&
-        e1?.description == e2?.description &&
-        e1?.numberTasks == e2?.numberTasks &&
-        e1?.completedTasks == e2?.completedTasks &&
-        e1?.lastEdited == e2?.lastEdited &&
-        e1?.timeCreated == e2?.timeCreated;
+    return listEquality.equals(e1?.usersAssigned, e2?.usersAssigned) &&
+        e1?.taskTitle == e2?.taskTitle &&
+        e1?.taskDetails == e2?.taskDetails &&
+        e1?.taskCompleted == e2?.taskCompleted &&
+        e1?.taskID == e2?.taskID &&
+        e1?.taskTimeCreated == e2?.taskTimeCreated &&
+        e1?.taskLastEdited == e2?.taskLastEdited &&
+        e1?.taskCategory == e2?.taskCategory &&
+        e1?.taskDueTime == e2?.taskDueTime &&
+        e1?.taskPriority == e2?.taskPriority;
   }
 
   @override
   int hash(TasksRecord? e) => const ListEquality().hash([
-        e?.owner,
         e?.usersAssigned,
-        e?.projectName,
-        e?.description,
-        e?.numberTasks,
-        e?.completedTasks,
-        e?.lastEdited,
-        e?.timeCreated
+        e?.taskTitle,
+        e?.taskDetails,
+        e?.taskCompleted,
+        e?.taskID,
+        e?.taskTimeCreated,
+        e?.taskLastEdited,
+        e?.taskCategory,
+        e?.taskDueTime,
+        e?.taskPriority
       ]);
 
   @override

@@ -50,11 +50,6 @@ class UsersRecord extends FirestoreRecord {
   DateTime? get editedTime => _editedTime;
   bool hasEditedTime() => _editedTime != null;
 
-  // "bio" field.
-  String? _bio;
-  String get bio => _bio ?? '';
-  bool hasBio() => _bio != null;
-
   // "user_name" field.
   String? _userName;
   String get userName => _userName ?? '';
@@ -68,7 +63,6 @@ class UsersRecord extends FirestoreRecord {
     _createdTime = snapshotData['created_time'] as DateTime?;
     _phoneNumber = snapshotData['phone_number'] as String?;
     _editedTime = snapshotData['edited_time'] as DateTime?;
-    _bio = snapshotData['bio'] as String?;
     _userName = snapshotData['user_name'] as String?;
   }
 
@@ -113,7 +107,6 @@ Map<String, dynamic> createUsersRecordData({
   DateTime? createdTime,
   String? phoneNumber,
   DateTime? editedTime,
-  String? bio,
   String? userName,
 }) {
   final firestoreData = mapToFirestore(
@@ -125,7 +118,6 @@ Map<String, dynamic> createUsersRecordData({
       'created_time': createdTime,
       'phone_number': phoneNumber,
       'edited_time': editedTime,
-      'bio': bio,
       'user_name': userName,
     }.withoutNulls,
   );
@@ -145,7 +137,6 @@ class UsersRecordDocumentEquality implements Equality<UsersRecord> {
         e1?.createdTime == e2?.createdTime &&
         e1?.phoneNumber == e2?.phoneNumber &&
         e1?.editedTime == e2?.editedTime &&
-        e1?.bio == e2?.bio &&
         e1?.userName == e2?.userName;
   }
 
@@ -158,7 +149,6 @@ class UsersRecordDocumentEquality implements Equality<UsersRecord> {
         e?.createdTime,
         e?.phoneNumber,
         e?.editedTime,
-        e?.bio,
         e?.userName
       ]);
 

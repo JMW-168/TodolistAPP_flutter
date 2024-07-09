@@ -98,8 +98,8 @@ class _WelcomePageWidgetState extends State<WelcomePageWidget> {
                   child: Padding(
                     padding: const EdgeInsets.all(6.0),
                     child: FFButtonWidget(
-                      onPressed: () {
-                        print('Button pressed ...');
+                      onPressed: () async {
+                        context.pushNamed('login');
                       },
                       text: 'Let\'s start',
                       options: FFButtonOptions(

@@ -6,38 +6,39 @@ class SignUpModel extends FlutterFlowModel<SignUpWidget> {
   ///  State fields for stateful widgets in this page.
 
   final unfocusNode = FocusNode();
-  // State field(s) for emailAddress widget.
-  FocusNode? emailAddressFocusNode;
-  TextEditingController? emailAddressTextController;
-  String? Function(BuildContext, String?)? emailAddressTextControllerValidator;
-  // State field(s) for password widget.
-  FocusNode? passwordFocusNode;
-  TextEditingController? passwordTextController;
-  late bool passwordVisibility;
-  String? Function(BuildContext, String?)? passwordTextControllerValidator;
-  // State field(s) for passwordConfirm widget.
-  FocusNode? passwordConfirmFocusNode;
-  TextEditingController? passwordConfirmTextController;
-  late bool passwordConfirmVisibility;
+  // State field(s) for SignUpEmail widget.
+  FocusNode? signUpEmailFocusNode;
+  TextEditingController? signUpEmailTextController;
+  String? Function(BuildContext, String?)? signUpEmailTextControllerValidator;
+  // State field(s) for SingUpPassword widget.
+  FocusNode? singUpPasswordFocusNode;
+  TextEditingController? singUpPasswordTextController;
+  late bool singUpPasswordVisibility;
   String? Function(BuildContext, String?)?
-      passwordConfirmTextControllerValidator;
+      singUpPasswordTextControllerValidator;
+  // State field(s) for SignUpPasswordConfirm widget.
+  FocusNode? signUpPasswordConfirmFocusNode;
+  TextEditingController? signUpPasswordConfirmTextController;
+  late bool signUpPasswordConfirmVisibility;
+  String? Function(BuildContext, String?)?
+      signUpPasswordConfirmTextControllerValidator;
 
   @override
   void initState(BuildContext context) {
-    passwordVisibility = false;
-    passwordConfirmVisibility = false;
+    singUpPasswordVisibility = false;
+    signUpPasswordConfirmVisibility = false;
   }
 
   @override
   void dispose() {
     unfocusNode.dispose();
-    emailAddressFocusNode?.dispose();
-    emailAddressTextController?.dispose();
+    signUpEmailFocusNode?.dispose();
+    signUpEmailTextController?.dispose();
 
-    passwordFocusNode?.dispose();
-    passwordTextController?.dispose();
+    singUpPasswordFocusNode?.dispose();
+    singUpPasswordTextController?.dispose();
 
-    passwordConfirmFocusNode?.dispose();
-    passwordConfirmTextController?.dispose();
+    signUpPasswordConfirmFocusNode?.dispose();
+    signUpPasswordConfirmTextController?.dispose();
   }
 }

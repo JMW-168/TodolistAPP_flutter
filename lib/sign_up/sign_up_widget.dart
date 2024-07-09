@@ -1,9 +1,12 @@
 import '/auth/firebase_auth/auth_util.dart';
+import '/backend/backend.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:easy_debounce/easy_debounce.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'sign_up_model.dart';
 export 'sign_up_model.dart';
@@ -25,14 +28,49 @@ class _SignUpWidgetState extends State<SignUpWidget> {
     super.initState();
     _model = createModel(context, () => SignUpModel());
 
-    _model.emailAddressTextController ??= TextEditingController();
-    _model.emailAddressFocusNode ??= FocusNode();
+    // On page load action.
+    SchedulerBinding.instance.addPostFrameCallback((_) async {
+      GoRouter.of(context).prepareAuthEvent();
+      if (_model.singUpPasswordTextController.text !=
+          _model.signUpPasswordConfirmTextController.text) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Passwords don\'t match!',
+            ),
+          ),
+        );
+        return;
+      }
 
-    _model.passwordTextController ??= TextEditingController();
-    _model.passwordFocusNode ??= FocusNode();
+      final user = await authManager.createAccountWithEmail(
+        context,
+        _model.signUpEmailTextController.text,
+        _model.singUpPasswordTextController.text,
+      );
+      if (user == null) {
+        return;
+      }
 
-    _model.passwordConfirmTextController ??= TextEditingController();
-    _model.passwordConfirmFocusNode ??= FocusNode();
+      await UsersRecord.collection.doc(user.uid).update(createUsersRecordData(
+            email: valueOrDefault<String>(
+              _model.signUpEmailTextController.text,
+              'example@gmail.com',
+            ),
+            createdTime: getCurrentTimestamp,
+          ));
+
+      context.goNamedAuth('homepage', context.mounted);
+    });
+
+    _model.signUpEmailTextController ??= TextEditingController();
+    _model.signUpEmailFocusNode ??= FocusNode();
+
+    _model.singUpPasswordTextController ??= TextEditingController();
+    _model.singUpPasswordFocusNode ??= FocusNode();
+
+    _model.signUpPasswordConfirmTextController ??= TextEditingController();
+    _model.signUpPasswordConfirmFocusNode ??= FocusNode();
   }
 
   @override
@@ -144,10 +182,64 @@ class _SignUpWidgetState extends State<SignUpWidget> {
                                       width: double.infinity,
                                       child: TextFormField(
                                         controller:
-                                            _model.emailAddressTextController,
-                                        focusNode: _model.emailAddressFocusNode,
+                                            _model.signUpEmailTextController,
+                                        focusNode: _model.signUpEmailFocusNode,
+                                        onChanged: (_) => EasyDebounce.debounce(
+                                          '_model.signUpEmailTextController',
+                                          const Duration(milliseconds: 2000),
+                                          () => setState(() {}),
+                                        ),
+                                        onFieldSubmitted: (_) async {
+                                          GoRouter.of(context)
+                                              .prepareAuthEvent();
+                                          if (_model
+                                                  .singUpPasswordTextController
+                                                  .text !=
+                                              _model
+                                                  .signUpPasswordConfirmTextController
+                                                  .text) {
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  'Passwords don\'t match!',
+                                                ),
+                                              ),
+                                            );
+                                            return;
+                                          }
+
+                                          final user = await authManager
+                                              .createAccountWithEmail(
+                                            context,
+                                            _model
+                                                .signUpEmailTextController.text,
+                                            _model.singUpPasswordTextController
+                                                .text,
+                                          );
+                                          if (user == null) {
+                                            return;
+                                          }
+
+                                          await UsersRecord.collection
+                                              .doc(user.uid)
+                                              .update(createUsersRecordData(
+                                                email: valueOrDefault<String>(
+                                                  _model
+                                                      .signUpEmailTextController
+                                                      .text,
+                                                  'example@gmail.com',
+                                                ),
+                                                createdTime:
+                                                    getCurrentTimestamp,
+                                              ));
+
+                                          context.goNamedAuth(
+                                              'homepage', context.mounted);
+                                        },
                                         autofocus: true,
                                         autofillHints: const [AutofillHints.email],
+                                        textInputAction: TextInputAction.next,
                                         obscureText: false,
                                         decoration: InputDecoration(
                                           labelText: 'Email',
@@ -203,6 +295,24 @@ class _SignUpWidgetState extends State<SignUpWidget> {
                                           fillColor:
                                               FlutterFlowTheme.of(context)
                                                   .primaryBackground,
+                                          suffixIcon: _model
+                                                  .signUpEmailTextController!
+                                                  .text
+                                                  .isNotEmpty
+                                              ? InkWell(
+                                                  onTap: () async {
+                                                    _model
+                                                        .signUpEmailTextController
+                                                        ?.clear();
+                                                    setState(() {});
+                                                  },
+                                                  child: const Icon(
+                                                    Icons.clear,
+                                                    color: Color(0xFF757575),
+                                                    size: 24.0,
+                                                  ),
+                                                )
+                                              : null,
                                         ),
                                         style: FlutterFlowTheme.of(context)
                                             .bodyLarge
@@ -213,7 +323,7 @@ class _SignUpWidgetState extends State<SignUpWidget> {
                                         keyboardType:
                                             TextInputType.emailAddress,
                                         validator: _model
-                                            .emailAddressTextControllerValidator
+                                            .signUpEmailTextControllerValidator
                                             .asValidator(context),
                                       ),
                                     ),
@@ -225,11 +335,14 @@ class _SignUpWidgetState extends State<SignUpWidget> {
                                       width: double.infinity,
                                       child: TextFormField(
                                         controller:
-                                            _model.passwordTextController,
-                                        focusNode: _model.passwordFocusNode,
-                                        autofocus: true,
+                                            _model.singUpPasswordTextController,
+                                        focusNode:
+                                            _model.singUpPasswordFocusNode,
+                                        autofocus: false,
                                         autofillHints: const [AutofillHints.password],
-                                        obscureText: !_model.passwordVisibility,
+                                        textInputAction: TextInputAction.next,
+                                        obscureText:
+                                            !_model.singUpPasswordVisibility,
                                         decoration: InputDecoration(
                                           labelText: 'Password',
                                           labelStyle:
@@ -286,13 +399,15 @@ class _SignUpWidgetState extends State<SignUpWidget> {
                                                   .primaryBackground,
                                           suffixIcon: InkWell(
                                             onTap: () => setState(
-                                              () => _model.passwordVisibility =
-                                                  !_model.passwordVisibility,
+                                              () => _model
+                                                      .singUpPasswordVisibility =
+                                                  !_model
+                                                      .singUpPasswordVisibility,
                                             ),
                                             focusNode:
                                                 FocusNode(skipTraversal: true),
                                             child: Icon(
-                                              _model.passwordVisibility
+                                              _model.singUpPasswordVisibility
                                                   ? Icons.visibility_outlined
                                                   : Icons
                                                       .visibility_off_outlined,
@@ -310,7 +425,7 @@ class _SignUpWidgetState extends State<SignUpWidget> {
                                               letterSpacing: 0.0,
                                             ),
                                         validator: _model
-                                            .passwordTextControllerValidator
+                                            .singUpPasswordTextControllerValidator
                                             .asValidator(context),
                                       ),
                                     ),
@@ -322,13 +437,14 @@ class _SignUpWidgetState extends State<SignUpWidget> {
                                       width: double.infinity,
                                       child: TextFormField(
                                         controller: _model
-                                            .passwordConfirmTextController,
-                                        focusNode:
-                                            _model.passwordConfirmFocusNode,
+                                            .signUpPasswordConfirmTextController,
+                                        focusNode: _model
+                                            .signUpPasswordConfirmFocusNode,
                                         autofocus: true,
                                         autofillHints: const [AutofillHints.password],
-                                        obscureText:
-                                            !_model.passwordConfirmVisibility,
+                                        textInputAction: TextInputAction.done,
+                                        obscureText: !_model
+                                            .signUpPasswordConfirmVisibility,
                                         decoration: InputDecoration(
                                           labelText: 'Confirm Password',
                                           labelStyle:
@@ -386,14 +502,14 @@ class _SignUpWidgetState extends State<SignUpWidget> {
                                           suffixIcon: InkWell(
                                             onTap: () => setState(
                                               () => _model
-                                                      .passwordConfirmVisibility =
+                                                      .signUpPasswordConfirmVisibility =
                                                   !_model
-                                                      .passwordConfirmVisibility,
+                                                      .signUpPasswordConfirmVisibility,
                                             ),
                                             focusNode:
                                                 FocusNode(skipTraversal: true),
                                             child: Icon(
-                                              _model.passwordConfirmVisibility
+                                              _model.signUpPasswordConfirmVisibility
                                                   ? Icons.visibility_outlined
                                                   : Icons
                                                       .visibility_off_outlined,
@@ -412,7 +528,7 @@ class _SignUpWidgetState extends State<SignUpWidget> {
                                             ),
                                         minLines: 1,
                                         validator: _model
-                                            .passwordConfirmTextControllerValidator
+                                            .signUpPasswordConfirmTextControllerValidator
                                             .asValidator(context),
                                       ),
                                     ),
@@ -423,9 +539,10 @@ class _SignUpWidgetState extends State<SignUpWidget> {
                                     child: FFButtonWidget(
                                       onPressed: () async {
                                         GoRouter.of(context).prepareAuthEvent();
-                                        if (_model
-                                                .passwordTextController.text !=
-                                            _model.passwordConfirmTextController
+                                        if (_model.singUpPasswordTextController
+                                                .text !=
+                                            _model
+                                                .signUpPasswordConfirmTextController
                                                 .text) {
                                           ScaffoldMessenger.of(context)
                                               .showSnackBar(
@@ -441,16 +558,27 @@ class _SignUpWidgetState extends State<SignUpWidget> {
                                         final user = await authManager
                                             .createAccountWithEmail(
                                           context,
-                                          _model
-                                              .emailAddressTextController.text,
-                                          _model.passwordTextController.text,
+                                          _model.signUpEmailTextController.text,
+                                          _model.singUpPasswordTextController
+                                              .text,
                                         );
                                         if (user == null) {
                                           return;
                                         }
 
+                                        await UsersRecord.collection
+                                            .doc(user.uid)
+                                            .update(createUsersRecordData(
+                                              email: valueOrDefault<String>(
+                                                _model.signUpEmailTextController
+                                                    .text,
+                                                'example@gmail.com',
+                                              ),
+                                              createdTime: getCurrentTimestamp,
+                                            ));
+
                                         context.goNamedAuth(
-                                            'login', context.mounted);
+                                            'homepage', context.mounted);
                                       },
                                       text: 'Create Account',
                                       options: FFButtonOptions(
@@ -550,7 +678,7 @@ class _SignUpWidgetState extends State<SignUpWidget> {
                                         }
 
                                         context.goNamedAuth(
-                                            'login', context.mounted);
+                                            'homepage', context.mounted);
                                       },
                                       text: 'Continue with Google',
                                       icon: const FaIcon(
@@ -606,7 +734,7 @@ class _SignUpWidgetState extends State<SignUpWidget> {
                                               }
 
                                               context.goNamedAuth(
-                                                  'login', context.mounted);
+                                                  'homepage', context.mounted);
                                             },
                                             text: 'Continue with Apple',
                                             icon: const FaIcon(
@@ -655,36 +783,48 @@ class _SignUpWidgetState extends State<SignUpWidget> {
                                     child: Padding(
                                       padding: const EdgeInsetsDirectional.fromSTEB(
                                           0.0, 12.0, 0.0, 12.0),
-                                      child: RichText(
-                                        textScaler:
-                                            MediaQuery.of(context).textScaler,
-                                        text: TextSpan(
-                                          children: [
-                                            const TextSpan(
-                                              text: 'Already have an account? ',
-                                              style: TextStyle(),
-                                            ),
-                                            TextSpan(
-                                              text: ' Sign In here',
-                                              style: FlutterFlowTheme.of(
-                                                      context)
-                                                  .bodyMedium
-                                                  .override(
-                                                    fontFamily: 'Readex Pro',
-                                                    color: FlutterFlowTheme.of(
-                                                            context)
-                                                        .primary,
-                                                    letterSpacing: 0.0,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                            )
-                                          ],
-                                          style: FlutterFlowTheme.of(context)
-                                              .bodyMedium
-                                              .override(
-                                                fontFamily: 'Readex Pro',
-                                                letterSpacing: 0.0,
+                                      child: InkWell(
+                                        splashColor: Colors.transparent,
+                                        focusColor: Colors.transparent,
+                                        hoverColor: Colors.transparent,
+                                        highlightColor: Colors.transparent,
+                                        onTap: () async {
+                                          context.pushNamed('login');
+                                        },
+                                        child: RichText(
+                                          textScaler:
+                                              MediaQuery.of(context).textScaler,
+                                          text: TextSpan(
+                                            children: [
+                                              const TextSpan(
+                                                text:
+                                                    'Already have an account? ',
+                                                style: TextStyle(),
                                               ),
+                                              TextSpan(
+                                                text: ' Sign In here',
+                                                style: FlutterFlowTheme.of(
+                                                        context)
+                                                    .bodyMedium
+                                                    .override(
+                                                      fontFamily: 'Readex Pro',
+                                                      color:
+                                                          FlutterFlowTheme.of(
+                                                                  context)
+                                                              .primary,
+                                                      letterSpacing: 0.0,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                              )
+                                            ],
+                                            style: FlutterFlowTheme.of(context)
+                                                .bodyMedium
+                                                .override(
+                                                  fontFamily: 'Readex Pro',
+                                                  letterSpacing: 0.0,
+                                                ),
+                                          ),
                                         ),
                                       ),
                                     ),

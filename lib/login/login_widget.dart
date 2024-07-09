@@ -3,7 +3,9 @@ import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:easy_debounce/easy_debounce.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'login_model.dart';
 export 'login_model.dart';
@@ -25,11 +27,27 @@ class _LoginWidgetState extends State<LoginWidget> {
     super.initState();
     _model = createModel(context, () => LoginModel());
 
-    _model.emailAddressTextController ??= TextEditingController();
-    _model.emailAddressFocusNode ??= FocusNode();
+    // On page load action.
+    SchedulerBinding.instance.addPostFrameCallback((_) async {
+      GoRouter.of(context).prepareAuthEvent();
 
-    _model.passwordTextController ??= TextEditingController();
-    _model.passwordFocusNode ??= FocusNode();
+      final user = await authManager.signInWithEmail(
+        context,
+        _model.loginEmailTextController.text,
+        _model.loginPasswordTextController.text,
+      );
+      if (user == null) {
+        return;
+      }
+
+      context.goNamedAuth('homepage', context.mounted);
+    });
+
+    _model.loginEmailTextController ??= TextEditingController();
+    _model.loginEmailFocusNode ??= FocusNode();
+
+    _model.loginPasswordTextController ??= TextEditingController();
+    _model.loginPasswordFocusNode ??= FocusNode();
   }
 
   @override
@@ -167,10 +185,16 @@ class _LoginWidgetState extends State<LoginWidget> {
                                       width: double.infinity,
                                       child: TextFormField(
                                         controller:
-                                            _model.emailAddressTextController,
-                                        focusNode: _model.emailAddressFocusNode,
-                                        autofocus: true,
+                                            _model.loginEmailTextController,
+                                        focusNode: _model.loginEmailFocusNode,
+                                        onChanged: (_) => EasyDebounce.debounce(
+                                          '_model.loginEmailTextController',
+                                          const Duration(milliseconds: 2000),
+                                          () => setState(() {}),
+                                        ),
+                                        autofocus: false,
                                         autofillHints: const [AutofillHints.email],
+                                        textInputAction: TextInputAction.next,
                                         obscureText: false,
                                         decoration: InputDecoration(
                                           labelText: 'Email',
@@ -226,6 +250,24 @@ class _LoginWidgetState extends State<LoginWidget> {
                                           fillColor:
                                               FlutterFlowTheme.of(context)
                                                   .primaryBackground,
+                                          suffixIcon: _model
+                                                  .loginEmailTextController!
+                                                  .text
+                                                  .isNotEmpty
+                                              ? InkWell(
+                                                  onTap: () async {
+                                                    _model
+                                                        .loginEmailTextController
+                                                        ?.clear();
+                                                    setState(() {});
+                                                  },
+                                                  child: const Icon(
+                                                    Icons.clear,
+                                                    color: Color(0xFF757575),
+                                                    size: 24.0,
+                                                  ),
+                                                )
+                                              : null,
                                         ),
                                         style: FlutterFlowTheme.of(context)
                                             .bodyLarge
@@ -236,7 +278,7 @@ class _LoginWidgetState extends State<LoginWidget> {
                                         keyboardType:
                                             TextInputType.emailAddress,
                                         validator: _model
-                                            .emailAddressTextControllerValidator
+                                            .loginEmailTextControllerValidator
                                             .asValidator(context),
                                       ),
                                     ),
@@ -248,11 +290,14 @@ class _LoginWidgetState extends State<LoginWidget> {
                                       width: double.infinity,
                                       child: TextFormField(
                                         controller:
-                                            _model.passwordTextController,
-                                        focusNode: _model.passwordFocusNode,
-                                        autofocus: true,
+                                            _model.loginPasswordTextController,
+                                        focusNode:
+                                            _model.loginPasswordFocusNode,
+                                        autofocus: false,
                                         autofillHints: const [AutofillHints.password],
-                                        obscureText: !_model.passwordVisibility,
+                                        textInputAction: TextInputAction.done,
+                                        obscureText:
+                                            !_model.loginPasswordVisibility,
                                         decoration: InputDecoration(
                                           labelText: 'Password',
                                           labelStyle:
@@ -309,13 +354,15 @@ class _LoginWidgetState extends State<LoginWidget> {
                                                   .primaryBackground,
                                           suffixIcon: InkWell(
                                             onTap: () => setState(
-                                              () => _model.passwordVisibility =
-                                                  !_model.passwordVisibility,
+                                              () => _model
+                                                      .loginPasswordVisibility =
+                                                  !_model
+                                                      .loginPasswordVisibility,
                                             ),
                                             focusNode:
                                                 FocusNode(skipTraversal: true),
                                             child: Icon(
-                                              _model.passwordVisibility
+                                              _model.loginPasswordVisibility
                                                   ? Icons.visibility_outlined
                                                   : Icons
                                                       .visibility_off_outlined,
@@ -333,7 +380,7 @@ class _LoginWidgetState extends State<LoginWidget> {
                                               letterSpacing: 0.0,
                                             ),
                                         validator: _model
-                                            .passwordTextControllerValidator
+                                            .loginPasswordTextControllerValidator
                                             .asValidator(context),
                                       ),
                                     ),
@@ -348,16 +395,16 @@ class _LoginWidgetState extends State<LoginWidget> {
                                         final user =
                                             await authManager.signInWithEmail(
                                           context,
+                                          _model.loginEmailTextController.text,
                                           _model
-                                              .emailAddressTextController.text,
-                                          _model.passwordTextController.text,
+                                              .loginPasswordTextController.text,
                                         );
                                         if (user == null) {
                                           return;
                                         }
 
                                         context.goNamedAuth(
-                                            'login', context.mounted);
+                                            'homepage', context.mounted);
                                       },
                                       text: 'Sign In',
                                       options: FFButtonOptions(
@@ -505,7 +552,7 @@ class _LoginWidgetState extends State<LoginWidget> {
                                               }
 
                                               context.goNamedAuth(
-                                                  'login', context.mounted);
+                                                  'homepage', context.mounted);
                                             },
                                             text: 'Continue with Apple',
                                             icon: const FaIcon(
@@ -554,36 +601,48 @@ class _LoginWidgetState extends State<LoginWidget> {
                                     child: Padding(
                                       padding: const EdgeInsetsDirectional.fromSTEB(
                                           0.0, 12.0, 0.0, 12.0),
-                                      child: RichText(
-                                        textScaler:
-                                            MediaQuery.of(context).textScaler,
-                                        text: TextSpan(
-                                          children: [
-                                            const TextSpan(
-                                              text: 'Don\'t have an account? ',
-                                              style: TextStyle(),
-                                            ),
-                                            TextSpan(
-                                              text: 'Sign Up here',
-                                              style: FlutterFlowTheme.of(
-                                                      context)
-                                                  .bodyMedium
-                                                  .override(
-                                                    fontFamily: 'Readex Pro',
-                                                    color: FlutterFlowTheme.of(
-                                                            context)
-                                                        .primary,
-                                                    letterSpacing: 0.0,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                            )
-                                          ],
-                                          style: FlutterFlowTheme.of(context)
-                                              .bodyMedium
-                                              .override(
-                                                fontFamily: 'Readex Pro',
-                                                letterSpacing: 0.0,
+                                      child: InkWell(
+                                        splashColor: Colors.transparent,
+                                        focusColor: Colors.transparent,
+                                        hoverColor: Colors.transparent,
+                                        highlightColor: Colors.transparent,
+                                        onTap: () async {
+                                          context.pushNamed('SignUp');
+                                        },
+                                        child: RichText(
+                                          textScaler:
+                                              MediaQuery.of(context).textScaler,
+                                          text: TextSpan(
+                                            children: [
+                                              const TextSpan(
+                                                text:
+                                                    'Don\'t have an account? ',
+                                                style: TextStyle(),
                                               ),
+                                              TextSpan(
+                                                text: 'Sign Up here',
+                                                style: FlutterFlowTheme.of(
+                                                        context)
+                                                    .bodyMedium
+                                                    .override(
+                                                      fontFamily: 'Readex Pro',
+                                                      color:
+                                                          FlutterFlowTheme.of(
+                                                                  context)
+                                                              .primary,
+                                                      letterSpacing: 0.0,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                              )
+                                            ],
+                                            style: FlutterFlowTheme.of(context)
+                                                .bodyMedium
+                                                .override(
+                                                  fontFamily: 'Readex Pro',
+                                                  letterSpacing: 0.0,
+                                                ),
+                                          ),
                                         ),
                                       ),
                                     ),
